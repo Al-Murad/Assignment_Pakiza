@@ -1,0 +1,88 @@
+﻿@model IEnumerable<Order>
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1 class="d-flex justify-content-center">List of orders</h1>
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex mb-1">
+            <a asp-controller="Orders" asp-action="Create" class="btn btn-primary btn-sm ">New Order</a>
+        </div>
+    </div>
+</div>
+@{
+    var z = 0;
+
+    <table class="table table-bordered ">
+        <thead class="table-primary bg-dark-subtle">
+            <tr>
+                <th>SL No</th>
+                <th>Customer Name</th>
+                <th>Phone</th>
+                <th>Total Qty</th>
+                <th>Total Value</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody class="table-striped">
+
+            @foreach (var i in Model)
+            {
+                <tr id="order_@i.OrderId">
+                    <td>@(++z)</td>
+                    <td>@i.Customer?.CustomerName</td>
+                    <td>@i.Customer?.Phone</td>
+                    <td>@i.OrderItems.Sum(x => x.Quantity)</td>
+                    <td>@i.OrderItems.Sum(x => x.Product?.UnitPrice * x.Quantity)?.ToString("0.00")</td>
+                    <td>
+                        <a asp-action="Print" asp-controller="Orders" asp-route-id="@i.OrderId" class="btn btn-primary btn-sm">Print</a>
+                        <a asp-action="Edit" asp-controller="Orders" asp-route-id="@i.OrderId" class="btn btn-success btn-sm">Edit</a>
+                        <button data-pk="@i.OrderId" class="btn btn-danger btn-sm del">Delete</button>
+
+                    </td>
+                </tr>
+            }
+            <tr class="text-xxl-start">
+                <td><strong>Total</strong></td>
+                <td></td>
+                <td></td>
+                <td><b>@Model.Sum(x => x.OrderItems.Sum(y => y.Quantity)).ToString("0.00")</b></td>
+                <td><b>@(Model.Sum(x => x.OrderItems.Sum(y => y.Product?.UnitPrice * y.Quantity))?.ToString("0.00"))</b></td>
+                <td></td>
+            </tr>
+
+        </tbody>
+    </table>
+
+}
+
+
+@section scripts {
+   
+    <script src="~/lib/jquery/jquery.js"></script>
+    
+    <script>
+        $(".del").click(function () {
+            var id = $(this).data("pk");
+            var trP = $(this).closest("tr");
+            console.log(trP)
+            var trS = trP.next();
+            if (!confirm("Are you sure to delete?\n\nProduct with sales data will be deleted.")) {
+                return;
+            }
+            $.ajax({
+                type: "post",
+                url: "/Orders/Delete/" + id,
+                success: r => {
+                    console.log(r);
+                    if (r.success == true) {
+                        trP.remove();
+                        window.location.reload();
+                    }
+                }
+            })
+        });
+    </script>
+}

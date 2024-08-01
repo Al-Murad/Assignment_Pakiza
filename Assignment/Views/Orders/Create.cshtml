@@ -1,0 +1,162 @@
+﻿@model OrderNewModel
+@{
+    ViewData["Title"] = "Create";
+}
+
+<form asp-action="Create" method="post" asp-controller="Orders" id="frm">
+    <div class="row">
+        <div class="col-12">
+            
+            <h3 class="d-flex justify-content-center">Customer information</h3>
+
+            <div class="form-group row mb-1">
+                <label asp-for="Customer.CustomerName" class="col-form-label col-2"></label>
+                <div class="col-2">
+                    <input type="text" asp-for="Customer.CustomerName" class="form-control" list="custs" />
+                    <span asp-validation-for="Customer.CustomerName" class="text-danger small"></span>
+
+                </div>
+
+                <label asp-for="Customer.Phone" class="col-form-label col-2"></label>
+                <div class="col-2">
+                    <input type="text" asp-for="Customer.Phone" class="form-control" />
+                    <span asp-validation-for="Customer.Phone" class="text-danger small"></span>
+                </div>
+
+                <label asp-for="Customer.Address" class="col-form-label col-2"></label>
+                <div class="col-2">
+                    <input type="text" asp-for="Customer.Address" class="form-control" />
+                    <span asp-validation-for="Customer.Address" class="text-danger small"></span>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    <div class="row mt=4">
+        <div class="col-12">
+            <h3 class="d-flex justify-content-center ">Product info</h3>
+
+            <div class="form-group row mb-1 mt-3">
+                <label asp-for="OrderItem.ProductId" class="col-form-label col-2">Product Name</label>
+                <div class="col-2">
+                    <input type="text" asp-for="OrderItem.ProductId" class="form-control" list="prods" />
+                    <span asp-validation-for="OrderItem.ProductId" class="text-danger small"></span>
+
+                </div>
+
+                <label asp-for="OrderItem.Quantity" class="col-form-label col-1"></label>
+                <div class="col-2">
+
+                    <input type="text" asp-for="OrderItem.Quantity" class="form-control" />
+                    <span asp-validation-for="OrderItem.Quantity" class="text-danger small"></span>
+                </div>
+
+                <label asp-for="OrderItem.UnitPrice" class="col-form-label col-2"></label>
+                <div class="col-2">
+                    <input type="text" asp-for="OrderItem.UnitPrice" class="form-control" />
+                    <span asp-validation-for="OrderItem.UnitPrice" class="text-danger small"></span>
+                </div>
+                <div class="col-1">
+                    <button type="submit" id="add" class="btn btn-secondary btn-sm" formnovalidate>Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 mt-5" id="itemlist">
+            @await Html.PartialAsync("_ListOfItem")
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-primary" id="save">Save</button>
+            </div>
+        </div>
+    </div>
+
+</form>
+
+<datalist id="custs">
+    @foreach (var c in ViewBag.CustomerNames)
+    {
+        <option value="@c">@c</option>
+    }
+</datalist>
+@section scripts {
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script>
+        $("#Customer_CustomerName").change(function () {
+            var name = $(this).val();
+            $.ajax({
+                url: `/Orders/GetCustomerDetail/?customerName=${name}`,
+                method: 'get',
+                dataType: 'json',
+                success: r => {
+                    if (r) {
+                        $("#Customer_Phone").val(r.phone);
+                        $("#Customer_Address").val(r.address);
+                    }
+                    else {
+                        $("#Customer_Phone").val('');
+                        $("#Customer_Address").val('');
+                    }
+
+                }
+            })
+        })
+        $("#add").click(() => {
+            let idOk = $("#frm").validate().element("#OrderItem_ProductId");
+            console.log(idOk);
+            let qtyOk = $("#frm").validate().element("#OrderItem_Quantity");
+            console.log(qtyOk);
+            let priceOk = $("#frm").validate().element("#OrderItem_UnitPrice");
+            if (idOk && qtyOk && priceOk) {
+
+                var data = { ProductName: $("#OrderItem_ProductId").val(), UnitPrice: $("#OrderItem_UnitPrice").val(), Quantity: $("#OrderItem_Quantity").val() }
+                console.log(data);
+                $.ajax({
+                    method: 'post',
+                    url: '/Orders/AddItem',
+                    data: { item: data },
+                    success: r => {
+                        $("#itemlist").html(r);
+                        $("#OrderItem_ProductId").val('');
+                        $("#OrderItem_UnitPrice").val('');
+                        $("#OrderItem_Quantity").val('');
+                    }
+                })
+            }
+        });
+        $("#save").click(() => {
+            let cnameOk = $("#frm").validate().element("#Customer_CustomerName");
+            let phoneOk = $("#frm").validate().element("#Customer_Phone");
+            let addOk = $("#frm").validate().element("#Customer_Address");
+            if (cnameOk && phoneOk && addOk) {
+                var data = {
+                    CustomerName: $("#Customer_CustomerName").val(),
+                    Phone: $("#Customer_Phone").val(),
+                    Address: $("#Customer_Address").val()
+                }
+                $.ajax({
+                    method: 'post',
+                    url: '/Orders/Create',
+                    data: { customer: data },
+                    success: r => {
+                        if (r.success) {
+                            $("#frm").trigger('reset');
+
+                            $("#alertsuccess").show();
+                            resetItemListTable();
+                        }
+                        else {
+                            $("#alertfail").show();
+                        }
+                    }
+                })
+            }
+        })
+
+    </script>
+}
