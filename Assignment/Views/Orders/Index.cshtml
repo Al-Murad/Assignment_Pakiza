@@ -69,7 +69,7 @@
             var trP = $(this).closest("tr");
             console.log(trP)
             var trS = trP.next();
-            if (!confirm("Are you sure to delete?\n\nProduct with sales data will be deleted.")) {
+            if (!confirm("Are you sure to delete?")) {
                 return;
             }
             $.ajax({
